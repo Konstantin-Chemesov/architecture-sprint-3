@@ -1,0 +1,78 @@
+@startuml
+title Smart Home Container Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Person(user, "User", "Пользователь системы Smart Home")
+Person(admin, "Administrator", "Администратор системы Smart Home")
+System(SmartHomeSystem, "Smart Home System", "Система управления умным домом")
+System_Ext(WeatherCastService, "Weather Cast Service", "Прогноз погоды по местоположению пользователя")
+System_Ext(WebBrowser, "Web Browser", "Браузер пользователя")
+System_Ext(MobileDevice, "Mobile Device", "Мобильное устройство пользователя")
+
+Container_Boundary(SmartHomeSystem, "Smart Home System") {
+  Container(WebApp, "Web App", "Кроссплатфоменный веб-интерфейс для управления умным домов")
+  Container(MobileApp, "Mobile App", "Мобильное приложение для управления умным домом")
+  Container(ApiGateway, "API Gateway", "Аутентификация/Балансировака/Маршрутизация")
+  Container(KafkaBroker, "Kafka", "Брокер сообщений")
+  Container(TelemetryManagementService, "Telemetry Service", "Python/Go", "Сервис управления телеметрией")
+  ContainerDb(TelemetryDatabase, "Telemetry DB", "Clickhouse", "Телеметрия с устройств")
+  Container(DeviceManagementService, "Device Management Service", "Python/Go", "Сервис управления устройствами")
+  ContainerDb(DevicesDatabase, "Devices DB", "PostgreSQL", "Данные об устройствах")
+  Container(UsersService, "Users Service", "Python/Go", "Сервис управления пользователями")
+  ContainerDb(UsersDatabase, "Users DB", "PostgreSQL", "Данные о пользователях, ролях и разрешениях")
+  Container(ScenarioService, "Scenario Service", "Python/Go", "Сервис сценариев работы устройств")
+  ContainerDb(ScenarioDatabase, "Scenario DB", "PostgreSQL", "Хранит сценарии работы устройств")
+}
+
+System_Boundary(devices, "Устройства") {
+    System_Ext(HeatingDevice, "Heating Device", "Устройство управления отоплением")
+    System_Ext(VideoSurveillanceDevice, "Video Surveillance Device", "Устройство управления видеонаблюдением")
+    System_Ext(LightingDevice, "Lighting Device", "Устройство управления освещением")
+    System_Ext(GateDevice, "Gate Device", "Устройство управления воротами")
+    System_Ext(ExtraDevice, "Extra Device", "Возможности под расширение функционала")
+}
+
+Rel(user, WebBrowser, "Управляет устройствами в своем доме")
+Rel(user, MobileDevice, "Управляет устройствами в своем доме")
+
+Rel(admin, WebBrowser, "Администрирует систему")
+
+Rel(MobileDevice, MobileApp, "Разворачивает локальное мобильное приложение, направляет управляющие запросы в систему")
+
+Rel(MobileApp, WeatherCastService, "Получение прогноза погоды для выдачи пользователю", "REST API")
+Rel(MobileApp, ApiGateway, "Направляет запросы в систему; Отрисовывает интерфейс для пользователя", "REST API", "HTTPS/JSON")
+
+Rel(WebBrowser, ApiGateway,"Направляет управляющие запросы в систему")
+
+Rel(ApiGateway,WebApp, "Авторизация и маршрутизация запросов на веб-приложение", "REST API", "HTTPS/JSON")
+Rel(ApiGateway,KafkaBroker, "Авторизация и маршрутизация от мобильного приложения", "REST API", "HTTPS/JSON")
+
+Rel(WebApp, WeatherCastService, "Получение прогноза погоды для выдачи пользователю", "REST API")
+Rel(WebApp, KafkaBroker,"Управление устройствами в доме; Администрирование системы", "REST API", "HTTPS/JSON")
+
+Rel(KafkaBroker, TelemetryManagementService,"Получение телеметрии устройства", "REST API", "HTTPS/JSON")
+Rel(KafkaBroker, UsersService,"Авторизация и управление пользователями", "REST API", "HTTPS/JSON")
+Rel(KafkaBroker, ScenarioService,"Получение/создание сценария работы устройства", "REST API", "HTTPS/JSON")
+Rel(KafkaBroker, DeviceManagementService,"Управление устройствами. Получение данных устройства", "REST API", "HTTPS/JSON")
+
+Rel(TelemetryManagementService, TelemetryDatabase,"Чтение/запись телеметрии устройств", "TCP/IP")
+Rel(DeviceManagementService, DevicesDatabase,"Чтение/запись данных об устройстве", "TCP/IP")
+Rel(UsersService, UsersDatabase,"Чтение/запись данных о пользователе, ролях и разрешениях пользователя", "TCP/IP")
+Rel(ScenarioService, ScenarioDatabase,"Чтение/запись данных сценария работы устройства", "TCP/IP")
+
+Rel(HeatingDevice,ApiGateway, "Передает телеметрию", "REST API", "HTTPS/JSON")
+Rel(VideoSurveillanceDevice,ApiGateway, "Передает телеметрию", "UDP", "HTTPS/JSON")
+Rel(LightingDevice,ApiGateway, "Передает телеметрию", "REST API", "HTTPS/JSON")
+Rel(GateDevice,ApiGateway, "Передает телеметрию", "REST API", "HTTPS/JSON")
+
+Rel(DeviceManagementService,HeatingDevice, "Отправка выполнения команд", "REST API", "HTTPS/JSON")
+Rel(DeviceManagementService,VideoSurveillanceDevice, "Отправка выполнения команд", "REST API", "HTTPS/JSON")
+Rel(DeviceManagementService,LightingDevice, "Отправка выполнения команд", "REST API", "HTTPS/JSON")
+Rel(DeviceManagementService,GateDevice, "Отправка выполнения команд", "REST API", "HTTPS/JSON")
+Rel(DeviceManagementService,ExtraDevice, "Отправка выполнения команд", "REST API", "HTTPS/JSON")
+
+
+@enduml
