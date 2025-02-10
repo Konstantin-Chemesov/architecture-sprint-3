@@ -1,0 +1,23 @@
+@startuml
+title Smart Home Context Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Person(user, "User", "Пользователь системы Smart Home")
+Person(admin, "Administrator", "Администратор системы Smart Home")
+System(SmartHomeSystem, "Smart Home System", "Система управления умным домом")
+
+System_Ext(SmartDevice, "Smart Device", "Устройство умного дома")
+
+System_Ext(WeatherApp, "Weathercast App", "Внешнее приложение прогноза погоды")
+
+Rel(user, SmartHomeSystem, "Управляет устройствами в своем доме", "Работа через графический интерфейс")
+Rel(user, SmartDevice, "Самостоятельно устанавливает и подключает умные устройства для работы с системой")
+Rel(SmartDevice, SmartHomeSystem, "Регистрируется в системе и отправляет нужные метрики", "REST API", "HTTPS/JSON")
+Rel(admin,SmartHomeSystem,"Администрирует систему Smart Home", "Работа через графический интерфейс")
+Rel(SmartHomeSystem,SmartDevice,"Управляет устройствами умного дома", "REST API", "HTTPS/JSON")
+Rel(SmartHomeSystem,WeatherApp,"Получает информацию о прогнозе погоды для выдачи пользователю", "REST API", "HTTPS/JSON")
+
+@enduml
